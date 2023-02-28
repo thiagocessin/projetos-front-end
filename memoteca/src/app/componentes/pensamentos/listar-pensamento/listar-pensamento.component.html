@@ -1,6 +1,20 @@
 <section class="container">
 
   <header class="header d-flex">
+
+    <div class="buscar-pensamentos">
+      <input
+        type="search"
+        class="filtro"
+        placeholder="O que você procura"
+        autofocus
+        [(ngModel)]="filtro"
+        (keyup)="pesquisarPensamentos()"
+        >
+      <img src="../../../../assets/imagens/icone-editar.png" alt="Lupa">
+
+    </div>
+
     <h2 class="ff-inter">
       Meu Mural
     </h2>
@@ -19,6 +33,12 @@
   </div>
 
 </section>
+
+<app-botao-carregar-mais
+  [haMaisPensamentos]="haMaisPensamentos"
+  (click)="carregarMaisPensamentos()">
+
+</app-botao-carregar-mais>
 
 <ng-template #semPensamentos>
   <div class="ff-inter sem-pensamentos">
