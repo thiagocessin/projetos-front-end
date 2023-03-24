@@ -18,7 +18,7 @@ import { switchMap } from 'rxjs/operators';
 export class CategoryFormComponent implements OnInit, AfterContentChecked{
 
   currentAction: string | undefined;
-  categoryForm:FormGroup | undefined;
+  categoryForm!: FormGroup;
   pageTitle: string | undefined;
   serverErrorMessages: string[] = [];
   submittingForm: boolean = false;
