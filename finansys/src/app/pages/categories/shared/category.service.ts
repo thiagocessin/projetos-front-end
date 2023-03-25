@@ -10,6 +10,7 @@ import {HttpClient, HttpHeaders } from "@angular/common/http";
 export class CategoryService {
 
   private apiPath: string = "api/categories"
+  //private apiPath: string = "http://localhost:8080/categorias"
 
   constructor(private http: HttpClient) {
 
@@ -35,6 +36,7 @@ export class CategoryService {
 
   create(category: Category): Observable<Category>{
 
+    console.log('ApiPATH: ', this.apiPath)
     return this.http.post(this.apiPath,category).pipe(
       catchError(this.handleError),
       map(this.jsonDataToCategory)
