@@ -1,6 +1,7 @@
+import { CategoryService } from './../../categories/shared/category.service';
 import { Entry } from './entry.model';
 import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, flatMap, map, mergeMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpHeaders } from "@angular/common/http";
 
@@ -11,7 +12,8 @@ export class EntryService {
 
   private apiPath: string = "api/entries"
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient,
+              private categoryService: CategoryService) {
 
   }
 
@@ -35,6 +37,44 @@ export class EntryService {
 
   create(entry: Entry): Observable<Entry>{
 
+    //uso somente pelo mock do backend
+    return this.categoryService.getById(Number(entry.categoryId)).pipe(
+      mergeMap(category => {
+        entry.category = category
+
+        return this.http.post(this.apiPath,entry).pipe(
+          catchError(this.handleError),
+          map(this.jsonDataToEntry)
+        )
+      })
+    )
+
+
+
+
+  }
+
+  update(entry: Entry): Observable<Entry>{
+    const url = `${this.apiPath}/${entry.id}`
+
+    return this.categoryService.getById(Number(entry.categoryId)).pipe(
+
+        mergeMap(category=>{
+          entry.category = category
+
+          return this.http.put(url, entry).pipe(
+            catchError(this.handleError),
+            map(()=>entry)
+          )
+
+        })
+      )
+
+  }
+
+  /* usar com backEnd real
+  create(entry: Entry): Observable<Entry>{
+
     return this.http.post(this.apiPath,entry).pipe(
       catchError(this.handleError),
       map(this.jsonDataToEntry)
@@ -51,7 +91,7 @@ export class EntryService {
     )
 
   }
-
+*/
   delete(id: number) : Observable<any>{
 
     const url = `${this.apiPath}/${id}`
