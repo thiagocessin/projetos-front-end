@@ -1,51 +1,28 @@
+import { mergeMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { Injector, Injectable } from '@angular/core';
+import { BaseResourceService } from 'src/app/shared/services/base-resource.service';
 import { CategoryService } from './../../categories/shared/category.service';
 import { Entry } from './entry.model';
-import { Observable, throwError } from 'rxjs';
-import { catchError, flatMap, map, mergeMap } from 'rxjs/operators';
-import { Injectable } from '@angular/core';
-import {HttpClient, HttpHeaders } from "@angular/common/http";
+
 
 @Injectable({
   providedIn: 'root'
 })
-export class EntryService {
+export class EntryService extends BaseResourceService<Entry>{
 
-  private apiPath: string = "api/entries"
-
-  constructor(private http: HttpClient,
+  constructor(protected override injector: Injector,
               private categoryService: CategoryService) {
-
+      super("api/entries", injector)
   }
 
-  getAll(): Observable<Entry[]>{
-
-    return this.http.get(this.apiPath).pipe(
-      catchError(this.handleError),
-      map(this.jsonDataToEntries)
-    )
-  }
-
-  getById(id: number) : Observable<Entry>{
-    const url = `${this.apiPath}/${id}`
-
-    return this.http.get(url).pipe(
-      catchError(this.handleError),
-      map(this.jsonDataToEntry)
-    )
-
-  }
-
-  create(entry: Entry): Observable<Entry>{
+  override create(entry: Entry): Observable<Entry>{
 
     //uso somente pelo mock do backend
     return this.categoryService.getById(Number(entry.categoryId)).pipe(
       mergeMap(category => {
         entry.category = category
-
-        return this.http.post(this.apiPath,entry).pipe(
-          catchError(this.handleError),
-          map(this.jsonDataToEntry)
-        )
+        return super.create(entry)
       })
     )
 
@@ -54,18 +31,14 @@ export class EntryService {
 
   }
 
-  update(entry: Entry): Observable<Entry>{
-    const url = `${this.apiPath}/${entry.id}`
+  override update(entry: Entry): Observable<Entry>{
 
     return this.categoryService.getById(Number(entry.categoryId)).pipe(
 
         mergeMap(category=>{
           entry.category = category
 
-          return this.http.put(url, entry).pipe(
-            catchError(this.handleError),
-            map(()=>entry)
-          )
+          return super.update(entry)
 
         })
       )
@@ -92,15 +65,6 @@ export class EntryService {
 
   }
 */
-  delete(id: number) : Observable<any>{
-
-    const url = `${this.apiPath}/${id}`
-
-    return this.http.delete(url).pipe(
-      catchError(this.handleError),
-      map(()=> null)
-    )
-  }
 
 
   //PRIVATE METHODS
@@ -116,9 +80,5 @@ export class EntryService {
     return Object.assign(new Entry(), jsonData);
   }
 
-  private handleError(error: any): Observable<any>{
-    console.log("Erro a requisição => ", error)
-    return throwError(error)
-  }
 
 }
