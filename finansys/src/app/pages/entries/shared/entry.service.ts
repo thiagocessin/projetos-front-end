@@ -13,7 +13,7 @@ export class EntryService extends BaseResourceService<Entry>{
 
   constructor(protected override injector: Injector,
               private categoryService: CategoryService) {
-      super("api/entries", injector)
+      super("api/entries", injector, Entry.fromJson)
   }
 
   override create(entry: Entry): Observable<Entry>{
@@ -45,6 +45,7 @@ export class EntryService extends BaseResourceService<Entry>{
 
   }
 
+
   /* usar com backEnd real
   create(entry: Entry): Observable<Entry>{
 
@@ -65,20 +66,5 @@ export class EntryService extends BaseResourceService<Entry>{
 
   }
 */
-
-
-  //PRIVATE METHODS
-
-  //recebe o retorno do servidor e converte para o tipo Entry
-  private jsonDataToEntries(jsonData: any[]): Entry[] {
-    const entries: Entry[] = []
-    jsonData.forEach((element)=> entries.push(Object.assign(new Entry(), element)))
-
-    return entries;
-  }
-  private jsonDataToEntry(jsonData: any): Entry {
-    return Object.assign(new Entry(), jsonData);
-  }
-
 
 }
