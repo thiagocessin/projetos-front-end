@@ -1,30 +1,19 @@
+import { BaseResourceFormComponent } from 'src/app/shared/components/base-resource-form/base-resource-form.component';
 import { EntryService } from './../shared/entry.service';
-import { Component, OnInit, AfterContentChecked } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { Component, Directive, Injector, OnInit } from '@angular/core';
+import { Validators } from "@angular/forms";
 
 import { Entry } from "../shared/entry.model";
 
-import { switchMap } from 'rxjs/operators';
-
-import * as toastr from "toastr";
 import { Category } from '../../categories/shared/category.model';
 import { CategoryService } from '../../categories/shared/category.service';
-
 
 @Component({
   selector: 'app-entry-form',
   templateUrl: './entry-form.component.html',
   styleUrls: ['./entry-form.component.css']
 })
-export class EntryFormComponent implements OnInit, AfterContentChecked{
-
-  currentAction: string | undefined;
-  entryForm!: FormGroup;
-  pageTitle: string | undefined;
-  serverErrorMessages: string[] = [];
-  submittingForm: boolean = false;
-  entry: Entry = new Entry();
+export class EntryFormComponent extends BaseResourceFormComponent<Entry> implements OnInit{
 
   categories: Array<Category> = [];
 
@@ -51,66 +40,20 @@ export class EntryFormComponent implements OnInit, AfterContentChecked{
     clear: 'Limpar'
   }
 
-  constructor(private entryService: EntryService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private formBuilder: FormBuilder,
-              private categoryservice: CategoryService){}
+  constructor(protected entryService: EntryService,
+              protected categoryservice: CategoryService,
+              protected override injector: Injector){
+                super(injector, new Entry(), entryService, Entry.fromJson)
+              }
 
-  ngOnInit(): void {
-    this.setCurrentAction();
-    this.buildEntryForm();
-    this.loadEntry();
-
-    this.loadCategories();
+  override ngOnInit(): void {
+   this.loadCategories();
+   super.ngOnInit()
   }
 
 
-  ngAfterContentChecked() {
-    //Called after every check of the component's or directive's content.
-    //Add 'implements AfterContentChecked' to the class.
-
-    this.setPageTitle();
-
-  }
-
-  submitForm(){
-    this.submittingForm = true;
-
-    if(this.currentAction == 'new'){
-      this.createEntry();
-    }else{
-      this.updateEntry();
-    }
-
-  }
-
-
-  get typeOptions(): Array<any>{
-
-
-    return Object.entries(Entry.types).map(
-      ([value, text])=>{
-        return {
-          value: value,
-          text: text,
-        }
-      }
-    )
-  }
-
-
-  //private methods
-  private setCurrentAction(){
-    if(this.route.snapshot.url[0].path == 'new')
-      this.currentAction='new'
-    else
-      this.currentAction = 'edit'
-
-  }
-
-  private buildEntryForm(){
-    this.entryForm = this.formBuilder.group({
+  protected override buildResourceForm(){
+    this.resourceForm = this.formBuilder.group({
       id: [null],
       name:[null,[Validators.required, Validators.minLength(2)]],
       description:[null],
@@ -122,71 +65,16 @@ export class EntryFormComponent implements OnInit, AfterContentChecked{
     })
   }
 
-  private loadEntry(){
-    if (this.currentAction == 'edit') {
+  get typeOptions(): Array<any>{
 
-        this.route.paramMap.pipe(
-          switchMap(params => this.entryService.getById(Number(params.get('id'))))
-        )
-        .subscribe((entry) => {
-            this.entry = entry;
-            this.entryForm?.patchValue(entry)// binds loaded entry data to EntryForm
-          },
-          (error) => alert('Ocorreu um erro no servidor')
-        )
-    }
-  }
-
-  private setPageTitle(){
-    if(this.currentAction== 'new')
-      this.pageTitle = 'Cadastro de Novo Lançamento'
-
-    else{
-      const entryName = this.entry.name || ''
-      this.pageTitle='Editando Lançamento: '+ entryName
-    }
-  }
-
-  private createEntry(){
-    //cria um obj entry novo e atribui os valores do form
-    const entry: Entry = Entry.fromJson(this.entryForm.value)
-
-    this.entryService.create(entry).subscribe(
-      newEntry => this.actionsForSuccess(newEntry),
-      error => this.actionsForError(error)
+    return Object.entries(Entry.types).map(
+      ([value, text])=>{
+        return {
+          value: value,
+          text: text,
+        }
+      }
     )
-  }
-
-  private updateEntry(){
-    const entry: Entry = Entry.fromJson(this.entryForm.value)
-
-    this.entryService.update(entry).subscribe(
-      newEntry => this.actionsForSuccess(newEntry),
-      error => this.actionsForError(error)
-    )
-
-  }
-
-  private actionsForSuccess(newEntry: Entry){
-    toastr.success("Solicitação processada com sucesso!")
-                                            //não adicionar no histórico de navegação do navegador
-    this.router.navigateByUrl("entries", {skipLocationChange:true})
-
-    /*.then(
-      ()=> this.router.navigate(["entries",newEntry.id,"edit"])
-    )*/
-
-  }
-  private actionsForError(error:any){
-    toastr.error("Ocorreu um erro ao processar a sua solicitação!")
-
-    this.submittingForm = false
-
-    if(error.status == 422){
-      this.serverErrorMessages = JSON.parse(error._body).errors
-    }else{
-      this.serverErrorMessages = ["Falha na comunicação com o servidor. Por favor tente mais tarde."]
-    }
   }
 
   private loadCategories(){
@@ -198,5 +86,17 @@ export class EntryFormComponent implements OnInit, AfterContentChecked{
     )
 
   }
+
+  protected override creationPageTitle(): string {
+    return "Cadastro de Novo Lançamento"
+}
+
+  protected override editionPageTitle(): string {
+    const resourceName = this.resource.name || ''
+
+    return "Editando Lançamento: "+ resourceName
+  }
+
+
 
 }
